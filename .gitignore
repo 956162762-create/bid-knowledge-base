@@ -1,0 +1,23 @@
+# API Keys
+.env
+
+# Large model files
+models/
+
+# Database files
+*.db
+chroma_db/
+bid_doc_db/
+test_chroma_db/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads
+data/uploads/
