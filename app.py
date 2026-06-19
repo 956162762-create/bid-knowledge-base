@@ -68,7 +68,7 @@ def main_page():
     with ui.header().classes('bg-dark text-white'):
         ui.label('📋 招投标知识库').classes('text-h5')
         ui.space()
-        ui.button('新建项目', icon='add', on_click=lambda: create_dialog.open()).props('flat')
+        ui.button('新建项目', icon='add', on_click=show_create_dialog).props('flat')
 
     with ui.splitter(limits=(240, 350)).classes('w-full h-full') as splitter:
         # ── 左侧：项目面板 ──
@@ -175,9 +175,9 @@ def render_context():
         with context_col:
             ui.label('📊 项目概况').classes('text-h6 text-bold')
             if info:
-                ui.label(f'条款节点: {info[\"clause_count\"]}').classes('text-body2')
-                ui.label(f'表格数量: {info[\"table_count\"]}').classes('text-body2')
-                ui.label(f'创建时间: {info[\"created_at\"][:10]}').classes('text-body2')
+                ui.label(f'条款节点: {info["clause_count"]}').classes('text-body2')
+                ui.label(f'表格数量: {info["table_count"]}').classes('text-body2')
+                ui.label(f'创建时间: {info["created_at"][:10]}').classes('text-body2')
 
             ui.separator()
             ui.label('📋 规则状态').classes('text-h6 text-bold')
@@ -189,7 +189,7 @@ def render_context():
                         rules = RulesEngine(paths["meta_db"])
                         rules_list = rules.list_rules()
                         for r in rules_list[:5]:
-                            ui.label(f'· {r[\"name\"]}').classes('text-caption')
+                            ui.label(f'· {r["name"]}').classes('text-caption')
             except:
                 ui.label('规则未加载').classes('text-grey')
 
@@ -197,30 +197,29 @@ def render_context():
 
 # ─── 新建项目对话框 ───
 
-@ui.dialog()
-def create_dialog():
-    name_input = ui.input('项目名称', placeholder='例如：深圳中学EPC').classes('w-full')
-    desc_input = ui.textarea('描述').classes('w-full')
+create_dialog = None
 
-    async def create():
-        name = name_input.value.strip()
-        if not name:
-            ui.notify('请输入项目名称', type='warning')
-            return
-        ps = get_project_service()
-        pid = ps.create(name, desc_input.value)
-        ui.notify(f'项目 {name} 已创建 (id={pid})', type='positive')
-        create_dialog.close()
-        # 刷新界面
-        ui.navigate.reload()
-
-    with ui.card().classes('p-4'):
+def show_create_dialog():
+    global create_dialog
+    with ui.dialog() as dialog, ui.card().classes('p-4'):
+        create_dialog = dialog
         ui.label('新建项目').classes('text-h6')
-        name_input
-        desc_input
+        name_input = ui.input('项目名称', placeholder='例如：深圳中学EPC').classes('w-full')
+        desc_input = ui.textarea('描述').classes('w-full')
+
+        async def do_create():
+            name = name_input.value.strip()
+            if not name:
+                ui.notify('请输入项目名称', type='warning')
+                return
+            ps = get_project_service()
+            pid = ps.create(name, desc_input.value)
+            ui.notify(f'项目 {name} 已创建 (id={pid})', type='positive')
+            dialog.close()
+
         with ui.row().classes('gap-2 justify-end'):
-            ui.button('取消', on_click=create_dialog.close).props('flat')
-            ui.button('创建', icon='add', on_click=create).props('flat')
+            ui.button('取消', on_click=dialog.close).props('flat')
+            ui.button('创建', icon='add', on_click=do_create).props('flat')
 
 # ─── 启动 ───
 
