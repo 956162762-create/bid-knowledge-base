@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>招投标知识库 — 实施计划 v3.1</title><style>:root{--bg:#0f1117;--panel:#1a1d27;--border:#2a2d3a;--text:#d4d6dc;--heading:#f0f1f5;--accent:#5b8def;--accent2:#40c9a2;--warn:#f5a623;--code-bg:#14161f}*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;max-width:1100px;margin:0 auto;padding:40px 24px 80px}h1{font-size:2em;color:var(--heading);border-bottom:2px solid var(--accent);padding-bottom:16px}h2{font-size:1.4em;color:var(--heading);margin:40px 0 12px;padding-left:12px;border-left:4px solid var(--accent)}h3{font-size:1.15em;color:var(--heading);margin:24px 0 8px}h4{color:var(--heading);margin:16px 0 6px}p{margin:6px 0 12px}a{color:var(--accent)}code{background:var(--code-bg);padding:2px 7px;border-radius:4px;font-family:monospace;font-size:.9em;color:var(--accent2)}pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:16px 20px;overflow-x:auto;font-family:monospace;font-size:.85em;line-height:1.5;margin:12px 0;color:#c9d1d9}pre code{background:none;padding:0;color:#c9d1d9}table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.93em}th,td{border:1px solid var(--border);padding:10px 14px;text-align:left}th{background:var(--panel);color:var(--heading);font-weight:600}tr:hover{background:rgba(255,255,255,.02)}blockquote{background:var(--panel);border-left:4px solid var(--warn);border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;font-size:.9em}hr{border:none;border-top:1px solid var(--border);margin:32px 0}ul,ol{margin-left:24px;margin-bottom:12px}li{margin:4px 0}</style></head><body><h1 id="v3">招投标知识库应用 — 完整实施计划（v3 · 四层架构）</h1>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>招投标知识库 — v3.2</title><style>:root{--bg:#0f1117;--panel:#1a1d27;--border:#2a2d3a;--text:#d4d6dc;--heading:#f0f1f5;--accent:#5b8def;--accent2:#40c9a2;--warn:#f5a623;--code-bg:#14161f}*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;max-width:1100px;margin:0 auto;padding:40px 24px 80px}h1{font-size:2em;color:var(--heading);border-bottom:2px solid var(--accent);padding-bottom:16px}h2{font-size:1.4em;color:var(--heading);margin:40px 0 12px;padding-left:12px;border-left:4px solid var(--accent)}h3{font-size:1.15em;color:var(--heading);margin:24px 0 8px}h4{color:var(--heading);margin:16px 0 6px}p{margin:6px 0 12px}a{color:var(--accent)}code{background:var(--code-bg);padding:2px 7px;border-radius:4px;font-family:monospace;font-size:.9em;color:var(--accent2)}pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:16px 20px;overflow-x:auto;font-family:monospace;font-size:.85em;line-height:1.5;margin:12px 0;color:#c9d1d9}pre code{background:none;padding:0;color:#c9d1d9}table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.93em}th,td{border:1px solid var(--border);padding:10px 14px;text-align:left}th{background:var(--panel);color:var(--heading);font-weight:600}tr:hover{background:rgba(255,255,255,.02)}blockquote{background:var(--panel);border-left:4px solid var(--warn);border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;font-size:.9em}hr{border:none;border-top:1px solid var(--border);margin:32px 0}ul,ol{margin-left:24px;margin-bottom:12px}li{margin:4px 0}</style></head><body><h1 id="v3">招投标知识库应用 — 完整实施计划（v3 · 四层架构）</h1>
 <blockquote>
 <p><strong>v3 变更：</strong> 从扁平 Phase 列表重组为四层分层架构（应用层 → API 层 → 核心层 → 数据层），应用层从 V2 提前到顶层设计，API 层显式定义。</p>
 <p><strong>零外部 API 依赖。</strong> API 层基于 NiceGUI 自带的 FastAPI，不需要部署任何新服务。</p>
@@ -790,6 +790,23 @@ class ExportRequest(BaseModel):
                          &quot;table_id&quot;: &quot;A-8&quot;},
         &quot;BIM标定性评审表&quot;: {&quot;source&quot;: &quot;第3篇&quot;, &quot;format&quot;: &quot;table&quot;},
 
+        # ✨ 技术标章节清单
+        # 来源: 投标人须知 → 投标文件编制 → &quot;10.4技术商务标文件主要包括下列内容&quot;
+        # 产出: 10 个章节标题 + 与 J-DX-4 评审项的对应关系
+        &quot;技术标章节清单&quot;: {
+            &quot;source&quot;: &quot;第1篇&quot;,
+            &quot;locate_by&quot;: &quot;10.4技术商务标文件主要包括下列内容&quot;,
+            &quot;format&quot;: &quot;chapter_list&quot;,        # 编号列表
+            &quot;chapter_range&quot;: &quot;（1）~（10）&quot;,
+            &quot;verify_against&quot;: {
+                &quot;table&quot;: &quot;J-DX-4&quot;,
+                &quot;rule&quot;: &quot;章节(1)-(8) = J-DX-4 Row 1-8（评审项）一一对应&quot;,
+                &quot;confirm_clause&quot;: &quot;第1至8章为评标委员会评审内容...J-DX-4&quot;,
+            },
+            &quot;note&quot;: &quot;（9）危大工程清单及管理措施 + （10）招标人要求的其他资料 不在 J-DX-4 评审范围内&quot;,
+            &quot;feeds_into&quot;: &quot;outline_generator → 生成技术标目录（来源：招标文件原文，非固定模板）&quot;,
+        },
+
         # 第六卷·招标人补充/修改（⚠ 每个标差异的关键，全部内容需识别）
         &quot;招标人补充修改&quot;: {&quot;source&quot;: &quot;第六卷&quot;, &quot;format&quot;: &quot;full_text&quot;,
                            &quot;match_alt_names&quot;: [&quot;招标人.*补充/修改&quot;, &quot;招标人.*修改/补充&quot;],
@@ -1224,4 +1241,4 @@ lxml&gt;=4.9             # 已有
 </tbody>
 </table>
 <hr />
-<p><em>v3 · 2026-06-19 · 四层架构：应用层 → API 层 → 核心层 → 数据层</em></p><p style="text-align:center;color:#5a5d68;margin-top:40px;font-size:.85em">v3.1 · 2026-06-19 · 实施建议已纳入：别名层 + 白名单 + 本地优先 + 编号修正</p></body></html>
+<p><em>v3 · 2026-06-19 · 四层架构：应用层 → API 层 → 核心层 → 数据层</em></p><p style="text-align:center;color:#5a5d68;margin-top:40px;font-size:.85em">v3.2 · 新增：技术标章节清单提取目标 (J-DX-4 交叉验证)</p></body></html>
