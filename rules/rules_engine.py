@@ -232,6 +232,12 @@ class RulesEngine:
             data = [data]
         count = 0
         for item in data:
+            # 检查是否已存在同名规则
+            existing = self.conn.execute(
+                "SELECT id FROM rules WHERE name = ?", (item["name"],)
+            ).fetchone()
+            if existing:
+                continue  # 跳过重复
             self.add_rule(
                 name=item["name"],
                 rule_type=item["rule_type"],
