@@ -1,227 +1,273 @@
 """
-招投标知识库 — NiceGUI 主入口
+招投标知识库 — NiceGUI 主入口（白蓝风格 v2）
 启动: python app.py
-桌面模式: python app.py --native
 """
 import sys
-import os
 from pathlib import Path
-
-# 确保能找到项目模块
 sys.path.insert(0, str(Path(__file__).parent))
 
 from nicegui import ui, app
 
-# 全局状态
-class AppState:
+# ═══════════════════════════════════════════
+# 全局样式
+# ═══════════════════════════════════════════
+
+# ═══════════════════════════════════════════
+# 状态
+# ═══════════════════════════════════════════
+
+class State:
     def __init__(self):
-        self.current_project_id = None
-        self.current_project_name = ""
-        self.messages = []            # [{role, content, sources, time}]
+        self.project_id = None
+        self.project_name = ""
         self.data_root = str(Path(__file__).parent / "data")
         self.system_db = str(Path(self.data_root) / "system.db")
 
-state = AppState()
+state = State()
 
-# 懒加载服务
-def get_query_service():
-    from services.query_service import QueryService
-    from memory.memory_manager import MemoryManager
-    from rules.rules_engine import RulesEngine
+# ═══════════════════════════════════════════
+# 服务懒加载
+# ═══════════════════════════════════════════
 
-    if not state.current_project_id:
-        return None
+def _svc(what):
+    return get_service(what)
 
-    paths = get_project_paths()
-    if not paths:
-        return None
-
-    memory = MemoryManager(paths["meta_db"])
-    rules = RulesEngine(paths["meta_db"])
-    rules.seed_preset_rules()
-    return QueryService(state.data_root, memory_manager=memory, rules_engine=rules)
-
-def get_project_service():
-    from services.project_service import ProjectService
-    return ProjectService(state.system_db, state.data_root)
-
-def get_project_paths():
+def get_service(what="query"):
     from db.project_repo import ProjectRepo
     repo = ProjectRepo(state.system_db, state.data_root)
-    return repo.get_project_paths(state.current_project_id)
+    if not state.project_id:
+        return None
+    paths = repo.get_project_paths(state.project_id)
+    if not paths:
+        return None
+    if what == "info":
+        from services.project_service import ProjectService
+        return ProjectService(state.system_db, state.data_root)
+    if what == "query":
+        from services.query_service import QueryService
+        from memory.memory_manager import MemoryManager
+        from rules.rules_engine import RulesEngine
+        mem = MemoryManager(paths["meta_db"])
+        rules = RulesEngine(paths["meta_db"])
+        rules.seed_preset_rules()
+        return QueryService(state.data_root, memory_manager=mem, rules_engine=rules)
 
-# ─── 主布局：三面板 ───
+# ═══════════════════════════════════════════
+# 主页面
+# ═══════════════════════════════════════════
 
 @ui.page('/')
 def main_page():
-    # 全局样式
     ui.add_head_html('''
     <style>
-        body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
-        .chat-msg { padding: 8px 12px; margin: 4px 0; border-radius: 8px; }
-        .chat-user { background: #1a3a5c; color: #e0e0e0; }
-        .chat-ai { background: #1e2130; color: #d4d6dc; }
-        .source-tag { font-size: 0.8em; color: #5b8def; cursor: pointer; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+        .q-field--focused .q-field__control {
+            box-shadow: 0 0 0 2px rgba(37,99,235,0.15) !important;
+        }
+        .q-btn { transition: all 0.15s ease; }
+        @keyframes messageIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .msg-bubble { animation: messageIn 0.2s ease-out; }
+        .q-table thead tr { background: #F8FAFC; }
+        .q-table tbody tr:hover { background: #F1F5F9; }
+        body { font-family: -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background: #F8FAFC; }
     </style>
     ''')
 
-    with ui.header().classes('bg-dark text-white'):
-        ui.label('📋 招投标知识库').classes('text-h5')
+    # ── 顶部导航栏 ──
+    with ui.header().classes('bg-white border-b border-gray-200 h-[52px]').style('padding: 0 20px'):
+        with ui.row().classes('items-center gap-3'):
+            ui.icon('description', color='#2563EB').style('font-size: 20px')
+            with ui.column().classes('gap-0'):
+                ui.label('招投标知识库').classes('text-lg font-semibold text-gray-900 leading-tight')
+                ui.label('Bid Knowledge Base').classes('text-xs text-gray-400 leading-tight')
         ui.space()
-        ui.button('新建项目', icon='add', on_click=show_create_dialog).props('flat')
+        ui.button('新建项目', icon='add', on_click=show_create_dialog) \
+            .props('unelevated').classes('rounded-lg px-4 py-1.5 text-sm bg-primary text-white')
 
-    with ui.splitter(limits=(240, 350)).classes('w-full h-full') as splitter:
-        # ── 左侧：项目面板 ──
+    # ── 三栏主体 ──
+    with ui.splitter(limits=(200, 280)).classes('w-full') as splitter:
         with splitter.before:
             render_sidebar()
-
-        # ── 中央：聊天面板 ──
         with splitter.after:
-            with ui.splitter(limits=(400, 500)).classes('w-full') as right_splitter:
+            with ui.splitter(limits=(300, 400)).classes('w-full') as right_splitter:
                 with right_splitter.before:
                     render_chat()
                 with right_splitter.after:
                     render_context()
 
-# ─── 左侧面板 ───
+# ═══════════════════════════════════════════
+# 左侧面板
+# ═══════════════════════════════════════════
 
 def render_sidebar():
-    def on_project_select(project_id, name):
-        state.current_project_id = project_id
-        state.current_project_name = name
-        project_label.set_text(f'📁 {name}')
-        load_context()
+    with ui.column().classes('w-[240px] bg-gray-50 h-full border-r border-gray-200 p-4'):
+        ui.label('项目').classes('text-sm text-gray-500 font-medium mb-3')
+        ui.input(placeholder='搜索项目...').props('clearable dense').classes('w-full mb-3')
 
-    with ui.column().classes('p-4 gap-2 w-full'):
-        ui.label('📁 项目列表').classes('text-h6 text-bold')
-        project_list = ui.column().classes('gap-1 w-full')
-        project_label = ui.label('未选择项目').classes('text-grey')
+        project_col = ui.column().classes('gap-2 w-full')
 
-        # 刷新项目列表
-        def refresh_projects():
-            project_list.clear()
-            ps = get_project_service()
+        def refresh():
+            project_col.clear()
+            ps = _svc("info")
+            if not ps:
+                with project_col:
+                    ui.label('暂无项目').classes('text-sm text-gray-400 p-3')
+                return
             for p in ps.list_all():
                 pid = p['id']
-                with project_list:
-                    ui.button(p['name'], on_click=lambda pid=pid, name=p['name']: on_project_select(pid, name)) \
-                        .props('flat dense align=left').classes('w-full')
+                name = p['name']
+                active = state.project_id == pid
+                cls = 'rounded-lg border p-3 cursor-pointer transition-all '
+                cls += 'border-l-[3px] border-l-primary bg-blue-50 border-gray-100' if active \
+                  else 'bg-white border-gray-100 hover:bg-gray-50'
+                with project_col:
+                    with ui.column().classes(cls).on('click', lambda pid=pid, n=name: select_project(pid, n)):
+                        ui.label(name).classes('text-sm font-medium text-gray-900')
+                        ui.label(f'{p.get("clause_count","?")} 条 · {p.get("created_at","")[:10]}') \
+                            .classes('text-xs text-gray-400 mt-1')
+        refresh()
 
-        refresh_projects()
-        ui.button('🔄 刷新', on_click=refresh_projects).props('flat dense').classes('mt-2')
+        ui.space()
+        with ui.column().classes('gap-1'):
+            ui.button('系统设置', icon='settings').props('flat dense') \
+                .classes('text-gray-500 text-sm justify-start w-full')
+            ui.button('使用帮助', icon='help_outline').props('flat dense') \
+                .classes('text-gray-500 text-sm justify-start w-full')
 
-# ─── 中央聊天面板 ───
+def select_project(pid, name):
+    state.project_id = pid
+    state.project_name = name
+    ui.navigate.reload()
+
+# ═══════════════════════════════════════════
+# 中间聊天面板
+# ═══════════════════════════════════════════
 
 def render_chat():
-    chat_container = ui.column().classes('p-4 gap-2')
-    chat_display = ui.column().classes('overflow-y-auto flex-grow')
+    with ui.column().classes('flex-1 h-full bg-white'):
+        # 项目标题栏
+        with ui.row().classes('items-center justify-between h-12 px-5 border-b border-gray-100'):
+            with ui.row().classes('items-center gap-2'):
+                ui.icon('folder_open', color='#94A3B8').style('font-size: 16px')
+                name = state.project_name or '选择项目'
+                ui.label(name).classes('text-sm font-medium text-gray-700')
+            with ui.row().classes('gap-2'):
+                ui.button('上传文件', icon='attach_file').props('flat dense').classes('text-gray-500 text-sm')
 
-    def add_message(role, content, sources=None):
-        state.messages.append({"role": role, "content": content, "sources": sources or []})
-        with chat_display:
-            css_class = 'chat-user' if role == 'user' else 'chat-ai'
-            with ui.card().classes(f'q-pa-sm {css_class}'):
-                prefix = '👤' if role == 'user' else '🤖'
-                ui.label(f'{prefix} {content}').classes('text-body1')
-                if sources:
-                    for s in sources[:3]:
-                        src_text = s.get('clause_number') or s.get('table_number') or s.get('title', '')
-                        ui.label(f'📎 {src_text}').classes('source-tag')
+        # 消息区域
+        msg_area = ui.scroll_area().classes('flex-1 p-5').style('min-height: 0')
+        msg_container = ui.column().classes('gap-0')
 
-    def send_message():
-        query_text = input_field.value.strip()
-        if not query_text:
-            return
-        if not state.current_project_id:
-            ui.notify('请先选择项目', type='warning')
-            return
+        def add_msg(role, text, sources=None):
+            with msg_container:
+                if role == 'user':
+                    with ui.row().classes('justify-end mb-3'):
+                        ui.label(text).classes(
+                            'bg-primary text-white rounded-2xl rounded-tr-sm px-4 py-2.5 '
+                            'text-sm max-w-[70%] msg-bubble'
+                        )
+                else:
+                    with ui.column().classes('mb-3 max-w-[90%] msg-bubble'):
+                        # 检测是否是表格
+                        if '|' in text and '\n|-' in text:
+                            with ui.column().classes('bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden p-4'):
+                                ui.markdown(text)
+                        else:
+                            with ui.column().classes('bg-white border border-gray-100 rounded-xl shadow-sm p-4'):
+                                ui.markdown(text)
+                        if sources:
+                            with ui.row().classes('items-center justify-between mt-2 px-1'):
+                                src_tags = [s.get('clause_number') or s.get('table_number') or s.get('title','') for s in sources[:3]]
+                                ui.label('来源：' + ' · '.join(filter(None, src_tags))).classes('text-xs text-gray-400')
+                                ui.button(icon='content_copy', color='gray').props('flat dense round').classes('text-gray-400')
 
-        add_message('user', query_text)
-        input_field.value = ''
+        # 输入区（固定底部）
+        with ui.column().classes('w-full bg-white border-t border-gray-100 pt-3 pb-4 px-4'):
+            input_field = ui.input(placeholder='输入问题，按 Enter 发送...') \
+                .classes('flex-1 bg-gray-50 border-0 rounded-xl px-4 py-3 text-sm').props('dense')
 
-        qs = get_query_service()
-        if qs:
-            result = qs.query(state.current_project_id, query_text)
-            add_message('ai', result.get('answer', '查询出错'),
-                       sources=result.get('sources', []))
-            load_context()
-        else:
-            add_message('ai', '⚠ 查询服务未就绪，请确认项目已选择并已摄入文档')
+            def send():
+                q = input_field.value.strip()
+                if not q:
+                    return
+                if not state.project_id:
+                    ui.notify('请先在左侧选择项目', type='warning')
+                    return
+                add_msg('user', q)
+                input_field.value = ''
+                qs = _svc("query")
+                if qs:
+                    result = qs.query(state.project_id, q)
+                    add_msg('ai', result.get('answer', '查询出错'), result.get('sources'))
+                else:
+                    add_msg('ai', '⚠ 查询服务未就绪')
 
-    with chat_container:
-        ui.label(f'💬 问答').classes('text-h6 text-bold').bind_text_from(state, 'current_project_name', backward=lambda n: f'💬 {n}' if n else '💬 问答')
-        chat_display
-        with ui.row().classes('w-full items-center gap-2'):
-            input_field = ui.input(placeholder='输入问题...').classes('flex-grow') \
-                .on('keydown.enter', send_message)
-            ui.button('发送', icon='send', on_click=send_message).props('flat')
+            with ui.row().classes('items-center gap-2 w-full'):
+                input_field.on('keydown.enter', send)
+                ui.button(icon='send', on_click=send).props('round unelevated').classes('w-9 h-9 bg-primary text-white')
 
-# ─── 右侧上下文面板 ───
+            ui.label('Enter 发送 · 项目选择后即可提问').classes('text-xs text-gray-300 text-center w-full mt-2')
+
+# ═══════════════════════════════════════════
+# 右侧面板
+# ═══════════════════════════════════════════
 
 def render_context():
-    context_col = ui.column().classes('p-4 gap-2')
+    with ui.column().classes('w-[260px] bg-gray-50 h-full border-l border-gray-200 p-4'):
+        ui.label('当前会话').classes('text-sm text-gray-500 font-medium mb-3')
 
-    def load_context():
-        context_col.clear()
-        if not state.current_project_id:
-            with context_col:
-                ui.label('📊 上下文').classes('text-h6 text-bold')
-                ui.label('请先选择项目').classes('text-grey')
+        if not state.project_id:
+            with ui.column().classes('items-center justify-center py-12 text-center'):
+                ui.icon('search', color='#CBD5E1').style('font-size: 40px')
+                ui.label('选择项目').classes('text-sm text-gray-500 mt-3')
+                ui.label('开始对话').classes('text-sm text-gray-400')
+                ui.label('上传招标文件后，AI 将自动分析并显示关键信息').classes('text-xs text-gray-300 mt-4')
             return
 
-        ps = get_project_service()
-        info = ps.get_info(state.current_project_id)
+        ps = _svc("info")
+        info = ps.get_info(state.project_id) if ps else None
+        if not info:
+            return
 
-        with context_col:
-            ui.label('📊 项目概况').classes('text-h6 text-bold')
-            if info:
-                ui.label(f'条款节点: {info["clause_count"]}').classes('text-body2')
-                ui.label(f'表格数量: {info["table_count"]}').classes('text-body2')
-                ui.label(f'创建时间: {info["created_at"][:10]}').classes('text-body2')
+        # 信息卡片
+        with ui.column().classes('bg-white rounded-lg border border-gray-100 p-3 mb-3'):
+            ui.label('项目信息').classes('text-xs text-gray-500 mb-2')
+            ui.label(f'{info["clause_count"]} 条款 · {info["table_count"]} 表格') \
+                .classes('text-sm text-gray-700')
+            ui.label(f'创建: {info.get("created_at","")[:10]}').classes('text-xs text-gray-400 mt-1')
 
-            ui.separator()
-            ui.label('📋 规则状态').classes('text-h6 text-bold')
-            try:
-                if state.current_project_id:
-                    paths = get_project_paths()
-                    if paths:
-                        from rules.rules_engine import RulesEngine
-                        rules = RulesEngine(paths["meta_db"])
-                        rules_list = rules.list_rules()
-                        for r in rules_list[:5]:
-                            ui.label(f'· {r["name"]}').classes('text-caption')
-            except:
-                ui.label('规则未加载').classes('text-grey')
-
-    load_context()
-
-# ─── 新建项目对话框 ───
-
-create_dialog = None
+# ═══════════════════════════════════════════
+# 新建项目对话框
+# ═══════════════════════════════════════════
 
 def show_create_dialog():
-    global create_dialog
-    with ui.dialog() as dialog, ui.card().classes('p-4'):
-        create_dialog = dialog
-        ui.label('新建项目').classes('text-h6')
-        name_input = ui.input('项目名称', placeholder='例如：深圳中学EPC').classes('w-full')
-        desc_input = ui.textarea('描述').classes('w-full')
+    with ui.dialog() as dialog, ui.card().classes('p-5 w-[400px]'):
+        ui.label('新建项目').classes('text-lg font-semibold text-gray-900 mb-4')
+        name_input = ui.input('项目名称', placeholder='例如：深圳中学EPC').classes('w-full mb-3')
+        desc_input = ui.textarea('描述（选填）').classes('w-full mb-4')
 
         async def do_create():
             name = name_input.value.strip()
             if not name:
                 ui.notify('请输入项目名称', type='warning')
                 return
-            ps = get_project_service()
-            pid = ps.create(name, desc_input.value)
-            ui.notify(f'项目 {name} 已创建 (id={pid})', type='positive')
-            dialog.close()
+            ps = _svc("info")
+            if ps:
+                pid = ps.create(name, desc_input.value or "")
+                ui.notify(f'项目「{name}」已创建', type='positive')
+                dialog.close()
+                ui.navigate.reload()
 
         with ui.row().classes('gap-2 justify-end'):
-            ui.button('取消', on_click=dialog.close).props('flat')
-            ui.button('创建', icon='add', on_click=do_create).props('flat')
+            ui.button('取消', on_click=dialog.close).props('flat').classes('text-gray-500')
+            ui.button('创建', icon='add', on_click=do_create).props('unelevated').classes('bg-primary text-white rounded-lg')
 
-# ─── 启动 ───
+# ═══════════════════════════════════════════
+# 启动
+# ═══════════════════════════════════════════
 
 if __name__ == '__main__':
     import argparse
@@ -239,5 +285,5 @@ if __name__ == '__main__':
         port=args.port,
         native=args.native,
         reload=False,
-        window_size=(1400, 900) if args.native else None,
+        window_size=(1400, 900),
     )
