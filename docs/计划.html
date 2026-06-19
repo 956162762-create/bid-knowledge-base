@@ -1,23 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>招投标知识库应用 — 实施计划 v3</title><style>
-  :root {--bg:#0f1117;--panel:#1a1d27;--border:#2a2d3a;--text:#d4d6dc;--heading:#f0f1f5;--accent:#5b8def;--accent2:#40c9a2;--warn:#f5a623;--code-bg:#14161f}
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;max-width:1100px;margin:0 auto;padding:40px 24px 80px}
-  h1{font-size:2em;color:var(--heading);border-bottom:2px solid var(--accent);padding-bottom:16px}
-  h2{font-size:1.4em;color:var(--heading);margin:40px 0 12px;padding-left:12px;border-left:4px solid var(--accent)}
-  h3{font-size:1.15em;color:var(--heading);margin:24px 0 8px}
-  h4{color:var(--heading);margin:16px 0 6px}
-  p{margin:6px 0 12px}a{color:var(--accent)}
-  code{background:var(--code-bg);padding:2px 7px;border-radius:4px;font-family:"Cascadia Code","Fira Code",Consolas,monospace;font-size:0.9em;color:var(--accent2)}
-  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:16px 20px;overflow-x:auto;font-family:"Cascadia Code","Fira Code",Consolas,monospace;font-size:0.85em;line-height:1.5;margin:12px 0;color:#c9d1d9}
-  pre code{background:none;padding:0;color:#c9d1d9}
-  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:0.93em}
-  th,td{border:1px solid var(--border);padding:10px 14px;text-align:left}
-  th{background:var(--panel);color:var(--heading);font-weight:600}
-  tr:hover{background:rgba(255,255,255,0.02)}
-  blockquote{background:var(--panel);border-left:4px solid var(--warn);border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;font-size:0.9em}
-  hr{border:none;border-top:1px solid var(--border);margin:32px 0}
-  ul,ol{margin-left:24px;margin-bottom:12px}li{margin:4px 0}
-</style></head><body><h1 id="v3">招投标知识库应用 — 完整实施计划（v3 · 四层架构）</h1>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>招投标知识库 — 实施计划 v3.1</title><style>:root{--bg:#0f1117;--panel:#1a1d27;--border:#2a2d3a;--text:#d4d6dc;--heading:#f0f1f5;--accent:#5b8def;--accent2:#40c9a2;--warn:#f5a623;--code-bg:#14161f}*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;max-width:1100px;margin:0 auto;padding:40px 24px 80px}h1{font-size:2em;color:var(--heading);border-bottom:2px solid var(--accent);padding-bottom:16px}h2{font-size:1.4em;color:var(--heading);margin:40px 0 12px;padding-left:12px;border-left:4px solid var(--accent)}h3{font-size:1.15em;color:var(--heading);margin:24px 0 8px}h4{color:var(--heading);margin:16px 0 6px}p{margin:6px 0 12px}a{color:var(--accent)}code{background:var(--code-bg);padding:2px 7px;border-radius:4px;font-family:monospace;font-size:.9em;color:var(--accent2)}pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:16px 20px;overflow-x:auto;font-family:monospace;font-size:.85em;line-height:1.5;margin:12px 0;color:#c9d1d9}pre code{background:none;padding:0;color:#c9d1d9}table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.93em}th,td{border:1px solid var(--border);padding:10px 14px;text-align:left}th{background:var(--panel);color:var(--heading);font-weight:600}tr:hover{background:rgba(255,255,255,.02)}blockquote{background:var(--panel);border-left:4px solid var(--warn);border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;font-size:.9em}hr{border:none;border-top:1px solid var(--border);margin:32px 0}ul,ol{margin-left:24px;margin-bottom:12px}li{margin:4px 0}</style></head><body><h1 id="v3">招投标知识库应用 — 完整实施计划（v3 · 四层架构）</h1>
 <blockquote>
 <p><strong>v3 变更：</strong> 从扁平 Phase 列表重组为四层分层架构（应用层 → API 层 → 核心层 → 数据层），应用层从 V2 提前到顶层设计，API 层显式定义。</p>
 <p><strong>零外部 API 依赖。</strong> API 层基于 NiceGUI 自带的 FastAPI，不需要部署任何新服务。</p>
@@ -441,17 +422,6 @@ VECTORIZED = [&quot;narrative&quot;, &quot;preamble&quot;, &quot;footnote&quot;,
 # 以下明确不入
 STRUCTURED = [&quot;clause&quot;, &quot;table&quot;, &quot;heading&quot;]
 </code></pre>
-<h3 id="35-phase-2">3.5 记忆系统（Phase 2）</h3>
-<pre><code class="language-python">class MemoryManager:
-    def store(project_id, category, key, value, context=None) -&gt; str: ...
-    def get_context_for_query(project_id, query) -&gt; List[dict]: ...
-    def promote_to_rule(memory_entry_id) -&gt; str: ...
-</code></pre>
-<ul>
-<li>四种类别：<code>preference</code> | <code>correction</code> | <code>output</code> | <code>note</code></li>
-<li>会话级短期 + 跨会话持久化</li>
-<li>纠错达阈值 N 次 → 自动转规则</li>
-</ul>
 <h3 id="34-phase-2">3.4 规则引擎（Phase 2）</h3>
 <p><strong>三类管道钩子：</strong></p>
 <pre><code>pre-retrieval   → 修改搜索策略（如&quot;危大工程 → 同时查 A-8 + §6.1.16&quot;）
@@ -506,7 +476,18 @@ post-generation → 格式化答案（来源标注、符号统一）
 </tr>
 </tbody>
 </table>
-<h3 id="35-agentphase-4">3.5 智能 Agent（Phase 4）</h3>
+<h3 id="35-phase-2">3.5 记忆系统（Phase 2）</h3>
+<pre><code class="language-python">class MemoryManager:
+    def store(project_id, category, key, value, context=None) -&gt; str: ...
+    def get_context_for_query(project_id, query) -&gt; List[dict]: ...
+    def promote_to_rule(memory_entry_id) -&gt; str: ...
+</code></pre>
+<ul>
+<li>四种类别：<code>preference</code> | <code>correction</code> | <code>output</code> | <code>note</code></li>
+<li>会话级短期 + 跨会话持久化</li>
+<li>纠错达阈值 N 次 → 自动转规则</li>
+</ul>
+<h3 id="36-agentphase-4">3.6 智能 Agent（Phase 4）</h3>
 <p><strong>职责：</strong> 编排结构化引擎的能力，处理跨模块查询。纯 Python 类，不引入额外 LLM 成本。</p>
 <pre><code class="language-python">class QueryPlanner:
     def plan(self, query: str) -&gt; QueryPlan:
@@ -520,7 +501,67 @@ post-generation → 格式化答案（来源标注、符号统一）
             case HIERARCHY    → clause_tree.walk(chapter)
             case SEMANTIC     → vector_store.search(query)  # 兜底
 </code></pre>
-<p><strong>意图分类器：</strong> LLM 快速分类为主（&lt; 1s），纯关键词规则兜底。处理边界情况如"6.1.16条"（无§符但是条款查询）、"危大工程有哪些"（无"清单"词但是查表格）。</p>
+<p><strong>意图分类器（本地正则优先，LLM 仅处理边界）：</strong></p>
+<blockquote>
+<p><strong>设计修正：</strong> 90%+ 的查询可纯本地规则命中（&lt;1ms），不走 LLM。LLM 只处理无法被正则/关键词覆盖的模糊语义查询（~10%）。</p>
+</blockquote>
+<pre><code class="language-python">class IntentClassifier:
+    def classify(self, query: str) -&gt; Intent:
+        # 第一层：本地正则 + 关键词（O(1)，零延迟，零 token 消耗）
+        intent = self._local_classify(query)
+        if intent:
+            return intent
+        # 第二层：LLM 分类（仅边界情况，~10%）
+        return self._llm_classify(query)
+
+    def _local_classify(self, query: str) -&gt; Optional[Intent]:
+        q = query.strip()
+        # 条款号：§6.1.16 / 第X条 / 6.1.16 / （一）
+        if re.search(r'§\s*\d|第\s*\d+[\.\d]*\s*条|（[一二三]+）', q):
+            return Intent.CLAUSE_LOOKUP
+        # 表格/清单
+        if any(kw in q for kw in [&quot;清单&quot;, &quot;表格&quot;, &quot;有哪些&quot;]):
+            return Intent.TABLE_QUERY
+        # 交叉引用
+        if any(kw in q for kw in [&quot;引用了&quot;, &quot;关联&quot;, &quot;相关条款&quot;, &quot;参见&quot;]):
+            return Intent.XREF_TRACE
+        # 层级导航
+        if re.search(r'第\s*[一二三\d]+\s*[章篇卷]|.*部分.*内容', q):
+            return Intent.HIERARCHY_NAV
+        return None  # 模糊语义 → LLM 兜底
+</code></pre>
+<p><strong>延迟对比：</strong></p>
+<table>
+<thead>
+<tr>
+<th>查询</th>
+<th style="text-align: center;">本地规则</th>
+<th style="text-align: center;">LLM 分类</th>
+<th style="text-align: center;">差距</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"§6.1.16 是什么"</td>
+<td style="text-align: center;">&lt;1ms</td>
+<td style="text-align: center;">~500ms</td>
+<td style="text-align: center;"><strong>500x</strong></td>
+</tr>
+<tr>
+<td>"危大工程有哪些"</td>
+<td style="text-align: center;">&lt;1ms</td>
+<td style="text-align: center;">~500ms</td>
+<td style="text-align: center;"><strong>500x</strong></td>
+</tr>
+<tr>
+<td>"这个项目有什么要求"</td>
+<td style="text-align: center;">不命中→LLM</td>
+<td style="text-align: center;">~500ms</td>
+<td style="text-align: center;">—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>覆盖率预估：</strong> 条款号 40% + 表格 25% + 层级 15% + 交叉引用 10% → 本地覆盖 ~90%。LLM 只处理 ~10% 边界。</p>
 <hr />
 <h2 id="4-api">4. API 接口层</h2>
 <blockquote>
@@ -670,9 +711,36 @@ class ExportRequest(BaseModel):
 <p><strong>工务署提取器（gongwushu_extractor.py）—— 基于用户阅读心得：</strong></p>
 <blockquote>
 <p>工务署招标文件特点是大部分内容同质化。按目录定位关键章节，红色字体标记每个标不同的信息点。</p>
+<p><strong>三条核心修正（来自实施建议）：</strong> (1) 别名层防模板改版——章节名变了照样命中；(2) 白名单优于黑名单——新增非同质化章节不会静默丢失；(3) 本地正则优先——条款号/表格编号 O(1) 命中。</p>
 </blockquote>
 <pre><code class="language-python">class GongwushuExtractor(BaseExtractor):
     &quot;&quot;&quot;深圳市建筑工务署招标文件专用提取器&quot;&quot;&quot;
+
+    # ── 别名层（防御模板改版）──
+    SECTION_ALIASES = {
+        &quot;招标公告&quot;: [&quot;招标公告&quot;, &quot;招标公告（投标邀请书）&quot;],
+        &quot;前附表二&quot;: [&quot;前附表二&quot;, &quot;投标人须知前附表&quot;, &quot;前附表（二）&quot;],
+        &quot;前附件一&quot;: [&quot;前附件一&quot;, &quot;工程情况介绍&quot;],
+        &quot;第2篇&quot;:   [&quot;第2篇&quot;, &quot;第二篇&quot;, &quot;评标办法&quot;],
+        &quot;第3篇&quot;:   [&quot;第3篇&quot;, &quot;第三篇&quot;, &quot;投标文件格式&quot;],
+        &quot;第六卷&quot;:   [&quot;第六卷&quot;, &quot;招标人补充&quot;, &quot;招标人修改&quot;, &quot;补充修改&quot;],
+    }
+
+    # ── 白名单（替代黑名单）──
+    EXTRACT_SECTIONS = [
+        &quot;招标公告&quot;, &quot;前附表二&quot;, &quot;前附件一&quot;, &quot;第2篇&quot;, &quot;第3篇&quot;, &quot;第六卷&quot;,
+    ]
+    # 不在白名单的章节 → logger.warning() 告警，提醒显式决策
+
+    def locate_section(self, engine, section_key: str):
+        &quot;&quot;&quot;按别名表定位，任一命中即返回&quot;&quot;&quot;
+        aliases = self.SECTION_ALIASES.get(section_key, [section_key])
+        for alias in aliases:
+            node = engine.search_clauses_by_title(alias)
+            if node: return node
+        return engine.fuzzy_find_section(section_key)
+
+    # ── 字段映射表 ──
 
     # ── 字段映射表 ──
     FIELD_MAP = {
@@ -1003,8 +1071,8 @@ Phase 4: 应用层 + Agent + 集成打磨     ← 技术标编制闭环
 <tr>
 <td><strong>4</strong></td>
 <td><code>app_layer/</code> + <code>agent/</code> + <code>export_service.py</code></td>
-<td style="text-align: center;">~600 行</td>
-<td>生成大纲 → 逐项响应 → 导出 docx</td>
+<td style="text-align: center;"><strong>~1,300 行</strong></td>
+<td>生成大纲 → 逐项响应 → 导出 docx（docx_exporter 单独 ~500-800 行）</td>
 </tr>
 </tbody>
 </table>
@@ -1156,4 +1224,4 @@ lxml&gt;=4.9             # 已有
 </tbody>
 </table>
 <hr />
-<p><em>v3 · 2026-06-19 · 四层架构：应用层 → API 层 → 核心层 → 数据层</em></p><p style="text-align:center;color:#5a5d68;margin-top:40px;font-size:0.85em">v3 · 2026-06-19 · 四层架构 + 领域提取器模式</p></body></html>
+<p><em>v3 · 2026-06-19 · 四层架构：应用层 → API 层 → 核心层 → 数据层</em></p><p style="text-align:center;color:#5a5d68;margin-top:40px;font-size:.85em">v3.1 · 2026-06-19 · 实施建议已纳入：别名层 + 白名单 + 本地优先 + 编号修正</p></body></html>
