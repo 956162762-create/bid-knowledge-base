@@ -10,17 +10,29 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 class QueryService:
-    """查询总编排器：结构化优先，语义兜底"""
+    """查询总编排器：结构化优先，语义兜底，记忆+规则注入"""
 
-    def __init__(self, data_root: str):
+    def __init__(self, data_root: str, memory_manager=None, rules_engine=None):
         self.data_root = data_root
+        self.memory = memory_manager
+        self.rules = rules_engine
+
+    def save_correction(self, project_id: str, query: str,
+                         original_answer: str, corrected_answer: str) -> Optional[int]:
+        """保存用户纠错 → 记忆（达到阈值自动转规则）"""
+        if not self.memory:
+            return None
+        return self.memory.store_correction(query, original_answer, corrected_answer)
 
     def query(self, project_id: str, question: str) -> dict:
         """
-        执行查询：
-        1. 意图分类（本地规则优先）
-        2. 结构化查询（条款/表格 O(1)）
-        3. 语义兜底（RAG）
+        执行查询（完整链路）：
+        0. 记忆上下文注入
+        1. 规则 pre-retrieval（修改搜索策略）
+        2. 意图分类（本地规则优先）
+        3. 结构化查询（条款/表格 O(1)）
+        4. 语义兜底（RAG）
+        5. 规则 post-generation（格式化答案）
         """
         from db.project_repo import ProjectRepo
         repo = ProjectRepo(
@@ -31,26 +43,54 @@ class QueryService:
         if not paths:
             return {"answer": "项目未找到", "intent": "error", "path": "none"}
 
+        # Step 0: 记忆上下文注入 + 规则 pre-retrieval
+        memory_context = []
+        triggered_rules = []
+        additional_searches = []
+
+        if self.rules:
+            pre_result = self.rules.apply_pre_retrieval(question)
+            triggered_rules = pre_result.get("triggered_rules", [])
+            additional_searches = pre_result.get("additional_searches", [])
+
+        if self.memory:
+            memory_context = self.memory.get_context_for_query(question)
+
         # Step 1: 意图分类
         intent = self._classify_intent(question)
 
         # Step 2: 按意图路由
+        result = None
         try:
             from docparse.builder import StructuredEngine
             engine = StructuredEngine(paths["struct_db"])
 
             if intent == "clause":
-                return self._handle_clause(engine, question)
+                result = self._handle_clause(engine, question)
             elif intent == "table":
-                return self._handle_table(engine, question)
+                # 规则注入的额外搜索
+                result = self._handle_table(engine, question, additional_searches)
             elif intent == "xref":
-                return self._handle_xref(engine, question)
+                result = self._handle_xref(engine, question)
             elif intent == "hierarchy":
-                return self._handle_hierarchy(engine, question)
+                result = self._handle_hierarchy(engine, question)
             else:
-                return self._handle_semantic(project_id, question)
+                result = self._handle_semantic(project_id, question)
         except Exception as e:
-            return {"answer": f"查询出错: {e}", "intent": intent, "path": "error"}
+            result = {"answer": f"查询出错: {e}", "intent": intent, "path": "error"}
+
+        # Step 5: 规则 post-generation（格式化答案）
+        if self.rules and result:
+            result["answer"] = self.rules.apply_post_generation(
+                question, result["answer"]
+            )
+
+        # 附加元数据
+        result["triggered_rules"] = triggered_rules
+        if memory_context:
+            result["memory_used"] = [m.get("key", "") for m in memory_context]
+
+        return result
 
     def _extract_keywords(self, query: str) -> list:
         """从查询中提取关键词（去掉疑问词和标点）"""
@@ -137,15 +177,22 @@ class QueryService:
             }],
         }
 
-    def _handle_table(self, engine, query: str) -> dict:
-        """表格查询"""
-        # 尝试提取表格编号
+    def _handle_table(self, engine, query: str, additional_searches: list = None) -> dict:
+        """表格查询（含规则注入的额外搜索）"""
         import re
-        m = re.search(r'([A-Z]+-\d+)', query)
         table = None
 
-        if m:
-            table = engine.get_table(m.group(1))
+        # 优先查规则注入的表格编号
+        for num in (additional_searches or []):
+            table = engine.get_table(num)
+            if table:
+                break
+
+        # 其次尝试从查询中提取表格编号
+        if not table:
+            m = re.search(r'([A-Z]+-\d+)', query)
+            if m:
+                table = engine.get_table(m.group(1))
 
         if not table:
             # 关键词搜索：从查询中提取 2-4 个字的实词
