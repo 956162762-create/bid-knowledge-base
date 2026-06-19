@@ -1,47 +1,23 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>招投标知识库应用 — 完整实施计划 v3 · 四层架构</title>
-<style>
-  :root {
-    --bg: #0f1117; --panel: #1a1d27; --border: #2a2d3a; --text: #d4d6dc;
-    --heading: #f0f1f5; --accent: #5b8def; --accent2: #40c9a2; --warn: #f5a623;
-    --code-bg: #14161f;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: var(--bg); color: var(--text); line-height: 1.7;
-    max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px;
-  }
-  h1 { font-size: 2em; color: var(--heading); border-bottom: 2px solid var(--accent); padding-bottom: 16px; }
-  h2 { font-size: 1.4em; color: var(--heading); margin: 40px 0 12px; padding-left: 12px; border-left: 4px solid var(--accent); }
-  h3 { font-size: 1.15em; color: var(--heading); margin: 24px 0 8px; }
-  h4 { color: var(--heading); margin: 16px 0 6px; }
-  p { margin: 6px 0 12px; }
-  a { color: var(--accent); }
-  code { background: var(--code-bg); padding: 2px 7px; border-radius: 4px; font-family: "Cascadia Code", "Fira Code", Consolas, monospace; font-size: 0.9em; color: var(--accent2); }
-  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; overflow-x: auto; font-family: "Cascadia Code", "Fira Code", Consolas, monospace; font-size: 0.85em; line-height: 1.5; margin: 12px 0; color: #c9d1d9; }
-  pre code { background: none; padding: 0; color: #c9d1d9; }
-  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.93em; }
-  th, td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
-  th { background: var(--panel); color: var(--heading); font-weight: 600; }
-  tr:hover { background: rgba(255,255,255,0.02); }
-  blockquote { background: var(--panel); border-left: 4px solid var(--warn); border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 16px 0; font-size: 0.9em; }
-  blockquote p { margin: 4px 0; }
-  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
-  ul, ol { margin-left: 24px; margin-bottom: 12px; }
-  li { margin: 4px 0; }
-  .layer-box {
-    border: 2px solid var(--accent); border-radius: 10px; padding: 14px 18px;
-    margin: 12px 0; background: rgba(91,141,239,0.05);
-  }
-</style>
-</head>
-<body>
-<h1 id="v3">招投标知识库应用 — 完整实施计划（v3 · 四层架构）</h1>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>招投标知识库应用 — 实施计划 v3</title><style>
+  :root {--bg:#0f1117;--panel:#1a1d27;--border:#2a2d3a;--text:#d4d6dc;--heading:#f0f1f5;--accent:#5b8def;--accent2:#40c9a2;--warn:#f5a623;--code-bg:#14161f}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;max-width:1100px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:2em;color:var(--heading);border-bottom:2px solid var(--accent);padding-bottom:16px}
+  h2{font-size:1.4em;color:var(--heading);margin:40px 0 12px;padding-left:12px;border-left:4px solid var(--accent)}
+  h3{font-size:1.15em;color:var(--heading);margin:24px 0 8px}
+  h4{color:var(--heading);margin:16px 0 6px}
+  p{margin:6px 0 12px}a{color:var(--accent)}
+  code{background:var(--code-bg);padding:2px 7px;border-radius:4px;font-family:"Cascadia Code","Fira Code",Consolas,monospace;font-size:0.9em;color:var(--accent2)}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:16px 20px;overflow-x:auto;font-family:"Cascadia Code","Fira Code",Consolas,monospace;font-size:0.85em;line-height:1.5;margin:12px 0;color:#c9d1d9}
+  pre code{background:none;padding:0;color:#c9d1d9}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:0.93em}
+  th,td{border:1px solid var(--border);padding:10px 14px;text-align:left}
+  th{background:var(--panel);color:var(--heading);font-weight:600}
+  tr:hover{background:rgba(255,255,255,0.02)}
+  blockquote{background:var(--panel);border-left:4px solid var(--warn);border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;font-size:0.9em}
+  hr{border:none;border-top:1px solid var(--border);margin:32px 0}
+  ul,ol{margin-left:24px;margin-bottom:12px}li{margin:4px 0}
+</style></head><body><h1 id="v3">招投标知识库应用 — 完整实施计划（v3 · 四层架构）</h1>
 <blockquote>
 <p><strong>v3 变更：</strong> 从扁平 Phase 列表重组为四层分层架构（应用层 → API 层 → 核心层 → 数据层），应用层从 V2 提前到顶层设计，API 层显式定义。</p>
 <p><strong>零外部 API 依赖。</strong> API 层基于 NiceGUI 自带的 FastAPI，不需要部署任何新服务。</p>
@@ -221,7 +197,8 @@
 │   ├── retriever.py
 │   ├── reranker.py
 │   ├── generator.py
-│   └── ollama_generator.py
+│   ├── ollama_generator.py
+│   └── deepseek_generator.py
 │
 ├── struct/                      # 核心层 — 结构化引擎（主）
 │   ├── parser/
@@ -397,14 +374,74 @@ CREATE TABLE cross_references (
   }]
 }
 </code></pre>
-<h3 id="32-rag">3.2 RAG 检索管线（辅引擎 · 已有，降级为语义兜底）</h3>
+<h3 id="32-phase-0a">3.2 格式标记识别（Phase 0a 同步实现）</h3>
+<blockquote>
+<p><strong>职责：</strong> 识别 docx 中的格式标记（红色字体、加粗、高亮等），将格式语义转为数据标记。
+<strong>核心层只提供"能认出格式"的能力；怎么用（红色=重点）由应用层定义。</strong></p>
+</blockquote>
+<pre><code class="language-python">class FormatMarker:
+    &quot;&quot;&quot;docx 格式标记提取器&quot;&quot;&quot;
+
+    def extract(self, para_element) -&gt; List[FormatTag]:
+        &quot;&quot;&quot;提取段落内的格式标记&quot;&quot;&quot;
+        tags = []
+        for run in para_element.findall('.//w:r', NSMAP):
+            props = run.find('w:rPr', NSMAP)
+            if props is not None:
+                color = props.find('w:color', NSMAP)
+                bold = props.find('w:b', NSMAP)
+                highlight = props.find('w:highlight', NSMAP)
+
+                tag = FormatTag(
+                    text=run.text,
+                    color=color.get('{...}val') if color is not None else None,  # &quot;FF0000&quot;
+                    bold=bold is not None,
+                    highlight=highlight.get('{...}val') if highlight is not None else None,
+                )
+                if tag.is_formatted:  # 有任何非默认格式
+                    tags.append(tag)
+        return tags
+</code></pre>
+<p><strong>支持的格式标记：</strong></p>
+<table>
+<thead>
+<tr>
+<th>格式</th>
+<th>XML 元素</th>
+<th>应用层可用语义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>红色字体</td>
+<td><code>&lt;w:color w:val="FF0000"/&gt;</code></td>
+<td>"重点信息，每个标都不同"</td>
+</tr>
+<tr>
+<td>加粗</td>
+<td><code>&lt;w:b/&gt;</code></td>
+<td>"关键条款"</td>
+</tr>
+<tr>
+<td>高亮</td>
+<td><code>&lt;w:highlight w:val="yellow"/&gt;</code></td>
+<td>"需要注意"</td>
+</tr>
+<tr>
+<td>下划线</td>
+<td><code>&lt;w:u/&gt;</code></td>
+<td>"强调"</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-rag">3.3 RAG 检索管线（辅引擎 · 已有，降级为语义兜底）</h3>
 <p><strong>职责：</strong> 仅处理模糊自然语言查询。条款和表格明确不入向量切片。</p>
 <pre><code class="language-python"># 仅以下类型内容进入向量库
 VECTORIZED = [&quot;narrative&quot;, &quot;preamble&quot;, &quot;footnote&quot;, &quot;unclassified&quot;]
 # 以下明确不入
 STRUCTURED = [&quot;clause&quot;, &quot;table&quot;, &quot;heading&quot;]
 </code></pre>
-<h3 id="33-phase-2">3.3 记忆系统（Phase 2）</h3>
+<h3 id="35-phase-2">3.5 记忆系统（Phase 2）</h3>
 <pre><code class="language-python">class MemoryManager:
     def store(project_id, category, key, value, context=None) -&gt; str: ...
     def get_context_for_query(project_id, query) -&gt; List[dict]: ...
@@ -615,7 +652,126 @@ class ExportRequest(BaseModel):
 <h2 id="5">5. 应用层 — 技术标智能编制系统</h2>
 <blockquote>
 <p><strong>核心场景闭环：</strong> 读招标文件 → 提取要求 → 生成技术标框架 → 人工填细节 → 导出 docx。</p>
+<p><strong>设计模式：</strong> 每个招标人/行业可挂载自己的领域提取模板，共享同一套核心引擎。新的行业规则只需新增一个提取器文件，不修改核心层。</p>
 </blockquote>
+<h3 id="50">5.0 领域提取器模式（可无限扩展）</h3>
+<pre><code>应用层/app_layer/extractors/
+├── __init__.py
+├── base_extractor.py           # 提取器基类 + 公共接口
+├── gongwushu_extractor.py     # ✨ 深圳市建筑工务署专用
+├── jiaotongju_extractor.py    # 将来：XX交通局
+└── zhongdian_extractor.py     # 将来：XX中电建
+         │
+         │  所有提取器实现统一接口：
+         │  extract(doc) → ExtractedFields
+         ▼
+核心层（通用，不变）
+</code></pre>
+<p><strong>工务署提取器（gongwushu_extractor.py）—— 基于用户阅读心得：</strong></p>
+<blockquote>
+<p>工务署招标文件特点是大部分内容同质化。按目录定位关键章节，红色字体标记每个标不同的信息点。</p>
+</blockquote>
+<pre><code class="language-python">class GongwushuExtractor(BaseExtractor):
+    &quot;&quot;&quot;深圳市建筑工务署招标文件专用提取器&quot;&quot;&quot;
+
+    # ── 字段映射表 ──
+    FIELD_MAP = {
+        # 招标公告
+        &quot;标段编号&quot;:     {&quot;source&quot;: &quot;招标公告&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;建设单位&quot;:     {&quot;source&quot;: &quot;招标公告&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;开竣工日期&quot;:   {&quot;source&quot;: &quot;招标公告&quot;, &quot;format&quot;: &quot;date_range&quot;},
+
+        # 第一卷·前附表二：工程主要事项（核心字段密集区）
+        &quot;工程名称&quot;:     {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;工程概况&quot;:     {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;承包范围&quot;:     {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;招标人另行发包的专业工程&quot;: {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;list&quot;},
+        &quot;甲供材料设备&quot;: {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;list&quot;},
+        &quot;质量标准&quot;:     {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;,
+                         &quot;ignore_keywords&quot;: [&quot;指引文件&quot;, &quot;规范性文件&quot;]},
+        &quot;质量目标&quot;:     {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;工期&quot;:         {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;资质要求&quot;:     {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;是否接受联合体&quot;:{&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;boolean&quot;},
+        &quot;投标文件的组成&quot;:{&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;list&quot;},
+        &quot;过多投标人淘汰环节&quot;: {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;评标方法&quot;:     {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;评标委员会推荐原则&quot;: {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;技术标评标地点&quot;: {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;明暗标规定&quot;:   {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;定标工作规则&quot;: {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;定标方法&quot;:     {&quot;source&quot;: &quot;前附表二&quot;, &quot;format&quot;: &quot;text&quot;},
+
+        # 前附件一：工程情况介绍
+        &quot;工程地址&quot;:     {&quot;source&quot;: &quot;前附件一&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;周边环境&quot;:     {&quot;source&quot;: &quot;前附件一&quot;, &quot;format&quot;: &quot;text&quot;},
+        &quot;工程主要特点&quot;: {&quot;source&quot;: &quot;前附件一&quot;, &quot;format&quot;: &quot;text&quot;, &quot;priority&quot;: &quot;high&quot;},
+        &quot;技术要求&quot;:     {&quot;source&quot;: &quot;前附件一&quot;, &quot;format&quot;: &quot;text&quot;, &quot;priority&quot;: &quot;high&quot;},
+        &quot;施工重点和难点&quot;:{&quot;source&quot;: &quot;前附件一&quot;, &quot;format&quot;: &quot;text&quot;, &quot;priority&quot;: &quot;high&quot;},
+
+        # 第2篇·评标办法
+        &quot;技术标定性评审表&quot;: {&quot;source&quot;: &quot;第2篇&quot;, &quot;format&quot;: &quot;table&quot;,
+                             &quot;match_rule&quot;: &quot;table_id=='J-DX-4'&quot;,
+                             &quot;note&quot;: &quot;可能有多个评审表，以 J-DX-4 为准&quot;},
+
+        # 第3篇·投标文件格式·技术标部分
+        &quot;技术标部分目录&quot;: {&quot;source&quot;: &quot;第3篇&quot;, &quot;format&quot;: &quot;outline&quot;},
+        &quot;承诺函模板&quot;:   {&quot;source&quot;: &quot;第3篇&quot;, &quot;format&quot;: &quot;template&quot;},
+        &quot;简历表模板&quot;:   {&quot;source&quot;: &quot;第3篇&quot;, &quot;format&quot;: &quot;template&quot;},
+        &quot;危大工程清单&quot;: {&quot;source&quot;: &quot;第3篇&quot;, &quot;format&quot;: &quot;table&quot;,
+                         &quot;table_id&quot;: &quot;A-8&quot;},
+        &quot;BIM标定性评审表&quot;: {&quot;source&quot;: &quot;第3篇&quot;, &quot;format&quot;: &quot;table&quot;},
+
+        # 第六卷·招标人补充/修改（⚠ 每个标差异的关键，全部内容需识别）
+        &quot;招标人补充修改&quot;: {&quot;source&quot;: &quot;第六卷&quot;, &quot;format&quot;: &quot;full_text&quot;,
+                           &quot;match_alt_names&quot;: [&quot;招标人.*补充/修改&quot;, &quot;招标人.*修改/补充&quot;],
+                           &quot;priority&quot;: &quot;critical&quot;,
+                           &quot;note&quot;: &quot;可能在别的卷章里，名称模式匹配即可&quot;},
+    }
+
+    # ── 优先级规则 ──
+    PRIORITY_RULES = [
+        # 同一字段多处出现时，哪个为准
+        (&quot;工程概况&quot;, &quot;前附件一 &gt; 前附表二&quot;),
+        (&quot;质量要求&quot;, &quot;前附件一 &gt; 前附表二&quot;),
+        # 红色字体内容标记为 priority=critical
+        (&quot;*&quot;, &quot;红色字体 &gt; 普通字体&quot;),  # 由核心层 FormatMarker 提供
+    ]
+
+    # ── 同质化章节跳过 ──
+    SKIP_SECTIONS = [
+        &quot;政府工程廉政警示&quot;,
+        &quot;反商业贿赂承诺书&quot;,
+        &quot;深圳市建筑工务署工作人员十不准&quot;,
+        &quot;深圳市建筑工务署施工现场十项禁令&quot;,
+        &quot;政府工程投标风险提示&quot;,
+        &quot;自定义电子招投标系统相关说明&quot;,
+        &quot;建设工程计算机评标系统相关说明&quot;,
+        # ... 同质化内容不进入提取管道
+    ]
+</code></pre>
+<p><strong>提取器基类：</strong></p>
+<pre><code class="language-python">class BaseExtractor(ABC):
+    &quot;&quot;&quot;领域提取器基类。每个招标人/行业实现自己的子类。&quot;&quot;&quot;
+
+    @abstractmethod
+    def get_field_map(self) -&gt; dict:
+        &quot;&quot;&quot;返回字段映射表&quot;&quot;&quot;
+
+    @abstractmethod
+    def get_priority_rules(self) -&gt; list:
+        &quot;&quot;&quot;返回优先级规则&quot;&quot;&quot;
+
+    def extract(self, structured_engine, project_id) -&gt; ExtractedFields:
+        &quot;&quot;&quot;通用提取流程：定位章节 → 提取字段 → 应用优先级 → 返回结构化结果&quot;&quot;&quot;
+        fields = ExtractedFields()
+        for field_name, config in self.get_field_map().items():
+            section = self.locate_section(structured_engine, config[&quot;source&quot;])
+            value = self.extract_field(section, config)
+            fields.set(field_name, value)
+        self.apply_priority_rules(fields)
+        return fields
+</code></pre>
 <h3 id="51">5.1 工作流</h3>
 <pre><code>招标文件 docx
     │
@@ -911,8 +1067,8 @@ lxml&gt;=4.9             # 已有
 </tr>
 <tr>
 <td><strong>LLM</strong></td>
-<td>Ollama qwen3:32b</td>
-<td>结构化素材完备，32B 完全够用</td>
+<td>Ollama qwen3:32b（主）+ DeepSeek API（后备）+ Gemini（备选）</td>
+<td>后备链自动切换：本地→DeepSeek→Gemini；DeepSeek 国内直连</td>
 </tr>
 <tr>
 <td><strong>意图分类</strong></td>
@@ -1000,9 +1156,4 @@ lxml&gt;=4.9             # 已有
 </tbody>
 </table>
 <hr />
-<p><em>v3 · 2026-06-19 · 四层架构：应用层 → API 层 → 核心层 → 数据层</em></p>
-<p style="text-align:center; color:#5a5d68; margin-top:40px; font-size:0.85em;">
-  v3 · 2026-06-19 · 四层架构：应用层 → API 层 → 核心层 → 数据层
-</p>
-</body>
-</html>
+<p><em>v3 · 2026-06-19 · 四层架构：应用层 → API 层 → 核心层 → 数据层</em></p><p style="text-align:center;color:#5a5d68;margin-top:40px;font-size:0.85em">v3 · 2026-06-19 · 四层架构 + 领域提取器模式</p></body></html>
