@@ -110,6 +110,7 @@ class ProjectRepo:
         return {
             "struct_db": project["struct_db_path"],
             "chroma_dir": project["chroma_path"],
+            "chroma_path": project["chroma_path"],
             "meta_db": project["meta_db_path"],
             "project_dir": str(self.data_root / "projects" / project_id),
         }

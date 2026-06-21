@@ -74,7 +74,7 @@ class VectorStore:
                 metadatas=metadatas,
             )
 
-        print(f"  ✓ 已存入 {total} 个文档块到集合 '{self.collection_name}'")
+        print(f"  [OK] stored {total} chunks in '{self.collection_name}'")
 
     def query(self, query_embedding: List[float], top_k: int = 5) -> dict:
         """
@@ -106,4 +106,4 @@ class VectorStore:
             name=self.collection_name,
             metadata={"hnsw:space": "cosine"},
         )
-        print(f"  ✓ 集合 '{self.collection_name}' 已清空")
+        print(f"  [OK] collection '{self.collection_name}' cleared")

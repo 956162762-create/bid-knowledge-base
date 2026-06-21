@@ -113,8 +113,12 @@ class ProjectService:
         doc_id = meta_conn.execute("SELECT last_insert_rowid()").fetchone()[0]
         meta_conn.close()
 
-        # Step 3: 向量化叙述性段落（后续可选，Phase 1 先跳过）
-        # vectorize_narrative_chunks(project_id, file_path)
+        # Step 3: 向量化叙述性段落
+        chroma_path = paths.get("chroma_path") or paths.get("chroma_dir")
+        try:
+            self._vectorize_document(project_id, file_path, chroma_path)
+        except Exception as e:
+            print(f"  [WARN] 向量化失败（结构化数据仍可用）: {e}")
 
         return {
             "document_id": doc_id,
@@ -124,6 +128,60 @@ class ProjectService:
             "index_size": result["index_size"],
             "status": "ready",
         }
+
+    def _vectorize_document(self, project_id: str, file_path: str, chroma_path: str):
+        """将文档切块并存入 ChromaDB（后台静默运行）"""
+        from pathlib import Path as _Path
+        from chunker import TextChunker
+        from document_loader import DocumentLoader
+
+        # 加载文档段落（带来源标注）
+        loader = DocumentLoader(file_path)
+        paragraphs = loader.load_with_source()
+
+        if not paragraphs:
+            print("  [vectorize] 文档无内容，跳过")
+            return
+
+        # 分块
+        chunker = TextChunker()
+        all_chunks = []
+        for p in paragraphs:
+            chunks = chunker.split(p["text"])
+            for i, c in enumerate(chunks):
+                if len(c.strip()) >= 10:  # 过滤过短的块
+                    all_chunks.append({
+                        "text": c,
+                        "source": p["source"],
+                        "chunk_id": f"{_Path(file_path).stem}_{i}_{len(all_chunks)}",
+                    })
+
+        if not all_chunks:
+            print("  [vectorize] 无有效块，跳过")
+            return
+
+        print(f"  [vectorize] 开始嵌入 {len(all_chunks)} 个文本块...")
+
+        # 嵌入 + 存入向量库
+        from embedder import create_embedder
+
+        class _vcfg:
+            embedding_provider = "local"
+            local_embedding_model = str(_Path(__file__).parent.parent / "models" / "bge-small-zh-v1.5")
+            embedding_dimension = 384
+            normalize_embeddings = True
+            chroma_persist_dir = chroma_path
+            chroma_collection_name = f"project_{project_id}"
+
+        cfg = _vcfg()
+        embedder = create_embedder(cfg)
+        embeddings = embedder.embed_batch([c["text"] for c in all_chunks])
+
+        from vector_store import VectorStore
+        vectordb = VectorStore(cfg)
+        vectordb.add_chunks(all_chunks, embeddings)
+
+        print(f"  [vectorize] done: {len(all_chunks)} chunks indexed")
 
     def delete_project(self, project_id: str) -> bool:
         return self.repo.delete(project_id)

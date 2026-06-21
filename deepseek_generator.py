@@ -3,7 +3,8 @@ DeepSeek API 生成器 — 后备引擎
 DeepSeek API 兼容 OpenAI 格式，国内直连，无需翻墙
 """
 import os
-from typing import List
+import sys
+from typing import List, Optional
 import requests
 from dotenv import load_dotenv
 from config import RAGConfig
@@ -11,35 +12,64 @@ from config import RAGConfig
 load_dotenv()
 
 
+def _safe_print(msg: str) -> None:
+    """Windows GBK 终端安全输出"""
+    try:
+        print(msg)
+    except UnicodeEncodeError:
+        print(msg.encode(sys.stdout.encoding or "utf-8", errors="replace").decode(
+            sys.stdout.encoding or "utf-8", errors="replace"
+        ))
+
+
 class DeepSeekGenerator:
     """使用 DeepSeek API 生成答案，作为 Ollama 的后备引擎"""
 
-    PROMPT_TEMPLATE = """你是一位知识助手，请根据用户的问题和下列片段生成准确的回答。
+    SYSTEM_PROMPT = (
+        "你是一位专业的招投标知识库助手，熟悉招标文件、技术标和评标办法。"
+        "请基于提供的参考资料回答用户问题，使用清晰的中文。"
+        "若参考资料中没有相关信息，请如实说明，不要编造条款或表格内容。"
+        "回答应结构清晰，重要条款号、表格编号需明确标注来源。"
+    )
+
+    PROMPT_TEMPLATE = """请根据下列参考资料回答用户问题。
 
 用户问题: {query}
 
-相关片段:
+参考资料:
 {context}
 
-请基于上述内容作答，不要编造信息。如果片段中没有相关信息，请如实说明。"""
+要求:
+1. 仅依据参考资料作答，不要编造
+2. 引用时标注条款号或表格编号
+3. 若资料不足，说明缺失内容并给出可尝试的检索建议
+"""
 
     BASE_URL = "https://api.deepseek.com/v1/chat/completions"
     MODEL = "deepseek-chat"
 
-    def __init__(self, config: RAGConfig = None):
+    _instance: Optional["DeepSeekGenerator"] = None
+
+    def __init__(self, config: RAGConfig = None, verify_on_init: bool = True):
         self.config = config or RAGConfig()
         self.api_key = os.getenv("DEEPSEEK_API_KEY")
         if not self.api_key:
             raise ValueError("未找到 DEEPSEEK_API_KEY，请在 .env 中设置")
 
-        # 测试连通性
+        if verify_on_init:
+            self._ping()
+
+    @classmethod
+    def get_shared(cls, config: RAGConfig = None) -> "DeepSeekGenerator":
+        if cls._instance is None:
+            cls._instance = cls(config, verify_on_init=False)
+        return cls._instance
+
+    def _ping(self) -> None:
         try:
             r = requests.post(
                 self.BASE_URL,
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
+                headers=self._headers(),
                 json={
                     "model": self.MODEL,
                     "messages": [{"role": "user", "content": "ping"}],
@@ -48,54 +78,101 @@ class DeepSeekGenerator:
                 timeout=10,
             )
             if r.status_code == 200:
-                print(f"  ✓ DeepSeek 生成器就绪: {self.MODEL}")
+                _safe_print(f"  [OK] DeepSeek ready: {self.MODEL}")
             else:
-                raise ConnectionError(f"DeepSeek 返回 HTTP {r.status_code}: {r.text[:200]}")
+                raise ConnectionError(f"DeepSeek HTTP {r.status_code}: {r.text[:200]}")
         except Exception as e:
-            raise ConnectionError(f"无法连接 DeepSeek API: {e}")
+            raise ConnectionError(f"无法连接 DeepSeek API: {e}") from e
 
-    def generate(self, query: str, chunks: List[dict], verbose: bool = True) -> str:
-        """基于检索到的上下文生成回答（自动重试）"""
-        context = "\n\n".join([chunk["text"] for chunk in chunks])
-        prompt = self.PROMPT_TEMPLATE.format(query=query, context=context)
+    def _headers(self) -> dict:
+        return {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
 
-        if verbose:
-            print(f"\n{'='*60}")
-            print(f"Prompt to DeepSeek ({self.MODEL}):")
-            print("-" * 60)
-            print(prompt[:500] + ("..." if len(prompt) > 500 else ""))
-            print("=" * 60 + "\n")
-
+    def _post(self, payload: dict, timeout: int = 120) -> dict:
         import time
         max_retries = 3
+        last_err = None
         for attempt in range(1, max_retries + 1):
             try:
                 response = requests.post(
                     self.BASE_URL,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": self.MODEL,
-                        "messages": [{"role": "user", "content": prompt}],
-                        "temperature": self.config.temperature,
-                        "max_tokens": self.config.max_output_tokens,
-                        "stream": False,
-                    },
-                    timeout=120,
+                    headers=self._headers(),
+                    json=payload,
+                    timeout=timeout,
                 )
                 response.raise_for_status()
-                data = response.json()
-                return data["choices"][0]["message"]["content"]
-
+                return response.json()
             except Exception as e:
+                last_err = e
                 if attempt < max_retries:
                     wait = attempt * 2
-                    print(f"  [Retry {attempt}/{max_retries}] DeepSeek API failed ({type(e).__name__}), waiting {wait}s...")
+                    _safe_print(
+                        f"  [Retry {attempt}/{max_retries}] DeepSeek failed "
+                        f"({type(e).__name__}), wait {wait}s..."
+                    )
                     time.sleep(wait)
-                else:
-                    raise
+        raise last_err
+
+    def chat(
+        self,
+        user_message: str,
+        system: str = None,
+        history: List[dict] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 1024,
+    ) -> str:
+        """通用对话（无需检索上下文）"""
+        messages = [{"role": "system", "content": system or self.SYSTEM_PROMPT}]
+        if history:
+            messages.extend(history)
+        messages.append({"role": "user", "content": user_message})
+        data = self._post({
+            "model": self.MODEL,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": False,
+        })
+        return data["choices"][0]["message"]["content"].strip()
+
+    def generate(self, query: str, chunks: List[dict], verbose: bool = True) -> str:
+        """基于检索到的上下文生成回答"""
+        context_parts = []
+        for i, chunk in enumerate(chunks, 1):
+            src = chunk.get("source") or chunk.get("title") or f"片段{i}"
+            text = chunk.get("text") or chunk.get("content") or str(chunk)
+            context_parts.append(f"[{src}]\n{text}")
+        return self.generate_from_context(query, context_parts, verbose=verbose)
+
+    def generate_from_context(
+        self,
+        query: str,
+        context_parts: List[str],
+        verbose: bool = False,
+        extra_system: str = "",
+    ) -> str:
+        context = "\n\n---\n\n".join(context_parts) if context_parts else "(无参考资料)"
+        prompt = self.PROMPT_TEMPLATE.format(query=query, context=context)
+        system = self.SYSTEM_PROMPT
+        if extra_system:
+            system = f"{system}\n\n{extra_system}"
+
+        if verbose:
+            _safe_print(f"\n{'=' * 60}\nPrompt to DeepSeek ({self.MODEL}):\n{prompt[:500]}...\n{'=' * 60}\n")
+
+        data = self._post({
+            "model": self.MODEL,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": self.config.temperature,
+            "max_tokens": self.config.max_output_tokens,
+            "stream": False,
+        })
+        return data["choices"][0]["message"]["content"].strip()
 
     def generate_stream(self, query: str, chunks: List[dict]):
         """流式生成（后续 UI 使用）"""
@@ -104,10 +181,7 @@ class DeepSeekGenerator:
 
         response = requests.post(
             self.BASE_URL,
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
+            headers=self._headers(),
             json={
                 "model": self.MODEL,
                 "messages": [{"role": "user", "content": prompt}],
@@ -130,20 +204,10 @@ class DeepSeekGenerator:
                     yield delta["content"]
 
     def generate_with_custom_prompt(self, prompt: str) -> str:
-        """使用自定义提示词生成"""
-        response = requests.post(
-            self.BASE_URL,
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": self.MODEL,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": self.config.temperature,
-                "max_tokens": self.config.max_output_tokens,
-            },
-            timeout=120,
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
+        data = self._post({
+            "model": self.MODEL,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": self.config.temperature,
+            "max_tokens": self.config.max_output_tokens,
+        })
+        return data["choices"][0]["message"]["content"].strip()

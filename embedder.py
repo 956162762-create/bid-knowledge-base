@@ -29,7 +29,7 @@ class GeminiEmbedder:
                 "或设置环境变量: export GOOGLE_API_KEY='your-key'"
             )
         self.client = genai.Client(api_key=api_key)
-        print(f"  ✓ Gemini 嵌入模型就绪: {self.model_name}")
+        print(f"  [OK] Gemini embedder ready: {self.model_name}")
 
     def embed(self, text: str) -> List[float]:
         """将单段文本转换为向量"""
@@ -71,7 +71,7 @@ class LocalEmbedder:
         print(f"正在加载本地嵌入模型: {self.model_name} ...")
         self.model = SentenceTransformer(self.model_name)
         dim = self.model.get_embedding_dimension()
-        print(f"  ✓ 嵌入模型加载完成 (维度: {dim})")
+        print(f"  [OK] Local embedder ready (dim: {dim})")
 
     def embed(self, text: str) -> List[float]:
         embedding = self.model.encode(
@@ -85,7 +85,7 @@ class LocalEmbedder:
         embeddings = self.model.encode(
             texts,
             normalize_embeddings=self.config.normalize_embeddings,
-            show_progress_bar=True,
+            show_progress_bar=False,
         )
         return embeddings.tolist()
 
